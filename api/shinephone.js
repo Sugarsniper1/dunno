@@ -30,6 +30,8 @@ const params = {
   devcode: testDevice,
   client: 'ios',
   language: 'en',
+  region: 'eu',         // AGGIUNTO
+  v: '4.0.2',           // AGGIUNTO
   timestamp: Date.now()
 };
 
