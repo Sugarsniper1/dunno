@@ -23,15 +23,15 @@ export default async function handler(req, res) {
     const testDevice = 'GPG0CLU18P';
     const timestamp = Math.floor(Date.now() / 1000);
 
-    const params = {
-      action: 'queryDeviceRealTimeKpis',
-      usr: username,
-      token: token,
-      devcode: testDevice,
-      timestamp: timestamp,
-      language: 'en',        // ✅ AGGIUNTO
-      client: 'ios'          // ✅ AGGIUNTO (spesso richiesto)
-    };
+const params = {
+  action: 'queryDeviceRealTimeKpis',
+  usr: username,
+  token: token,
+  devcode: testDevice,
+  client: 'ios',
+  language: 'en',
+  timestamp: Date.now()
+};
 
     console.log('📡 API Params:', JSON.stringify(params, null, 2));
 
