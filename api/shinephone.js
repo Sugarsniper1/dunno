@@ -1,82 +1,35 @@
 export default async function handler(req, res) {
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method Not Allowed' });
+  if (req.method !== "POST") {
+    return res.status(405).json({ error: "Metodo non consentito" });
   }
 
-  const {
-    action,
-    usr,
-    token,
-    devcode,
-    serialNum,
-    client,
-    language,
-    region,
-    v,
-    isWeb,
-    userName,
-    userPassword,
-  } = req.body || {};
-
-  let url = '';
-  let method = 'POST';
-  let headers = {};
-  let body = '';
+  const url = "https://eu5.fusionsolar.huawei.com/thirdData/login.json"; // oppure l’URL giusto ShinePhone, se diverso
 
   try {
-    if (action === 'login') {
-      url = 'https://eu.shinemonitor.com/user/login';
-      headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
-      body = new URLSearchParams({
-        userName,
-        userPassword,
-        language: language || 'en',
-        isWeb: isWeb || 'true',
-        client: client || 'ios',
-      }).toString();
-    } else if (action === 'queryDeviceRealTimeKpis') {
-      url = 'https://eu.shinemonitor.com/device/queryDeviceRealTimeKpis';
-      headers = {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      };
-      body = new URLSearchParams({
-        action,
-        usr,
-        token,
-        devcode,
-        serialNum,
-        client: client || 'ios',
-        language: language || 'en',
-        region: region || 'eu',
-        v: v || '4.0.2',
-        isWeb: isWeb || 'true',
-        timestamp: Math.floor(Date.now() / 1000),
-      }).toString();
-    } else {
-      return res.status(400).json({ error: 'Unsupported action' });
-    }
-
-    const shinePhoneResponse = await fetch(url, {
-      method,
-      headers,
-      body,
-    });
-
-    const json = await shinePhoneResponse.json();
-
-    return res.status(200).json({
-      success: true,
-      debug: {
-        httpStatus: shinePhoneResponse.status,
-        testDevice: devcode,
-        apiParams: Object.fromEntries(new URLSearchParams(body)),
-        shinePhoneResponse: json,
+    const params = new URLSearchParams(req.body);
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
       },
-      timestamp: new Date().toISOString(),
+      body: params,
     });
+
+    const contentType = response.headers.get("content-type");
+
+    if (contentType && contentType.includes("application/json")) {
+      const data = await response.json();
+      return res.status(200).json({ success: true, data });
+    } else {
+      const text = await response.text();
+      return res.status(500).json({
+        error: "Unexpected content-type from ShinePhone",
+        contentType,
+        rawText: text,
+      });
+    }
   } catch (error) {
-    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
+    console.error("Errore nella chiamata:", error);
+    return res.status(500).json({ error: "Errore interno", details: error.message });
   }
 }
