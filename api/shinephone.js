@@ -1,98 +1,50 @@
-// api/shinephone.js
-
-import querystring from 'querystring';
-
 export default async function handler(req, res) {
-  // CORS headers
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method !== 'POST') {
+    return res.status(405).json({ error: 'Method Not Allowed' });
+  }
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
+  const isForm = req.headers['content-type'] === 'application/x-www-form-urlencoded';
+  const body = isForm ? Object.fromEntries(new URLSearchParams(req.body)) : req.body;
 
-  try {
-    // Supporto JSON e x-www-form-urlencoded
-    const body = req.headers['content-type'] === 'application/x-www-form-urlencoded'
-      ? querystring.parse(await new Promise((resolve, reject) => {
-          let raw = '';
-          req.on('data', chunk => raw += chunk);
-          req.on('end', () => resolve(raw));
-          req.on('error', reject);
-        }))
-      : req.body;
+  const action = body.action;
 
-    const {
-      action = 'queryDeviceRealTimeKpis',
-      token,
-      username,
-      usr,
-      devcode = 'GPG0CLU18P',
-      serialNum = 'GPG0CLU18P',
-      client = 'ios',
-      language = 'en',
-      region = 'eu',
-      v = '4.0.2',
-      isWeb = 'true',
-      timestamp = Math.floor(Date.now() / 1000)
-    } = body;
-
-    const finalUsername = username || usr;
-
-    // Log di debug
-    console.log('🔍 BODY:', JSON.stringify(body, null, 2));
-    console.log('🔑 Token:', token?.substring(0, 8) + '...');
-    console.log('👤 Username:', finalUsername);
-    console.log('📟 Device:', devcode);
+  // ✅ Solo per le chiamate diverse da 'login', richiedi token e username
+  if (action !== 'login') {
+    const token = body.token;
+    const username = body.usr || body.username || body.userName;
 
     if (!token) return res.status(400).json({ error: 'Token mancante' });
-    if (!finalUsername) return res.status(400).json({ error: 'Username mancante' });
-
-    // Import dinamico di fetch (compatibile con Vercel)
-    const fetch = (await import('node-fetch')).default;
-
-    const params = {
-      action,
-      usr: finalUsername,
-      token,
-      devcode,
-      serialNum,
-      client,
-      language,
-      region,
-      v,
-      isWeb,
-      timestamp
-    };
-
-    // Chiamata a ShinePhone
-    const response = await fetch('https://api.shinemonitor.com/public/', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Axintele/1.0'
-      },
-      body: new URLSearchParams(params)
-    });
-
-    const data = await response.json();
-
-    return res.status(200).json({
-      success: true,
-      debug: {
-        httpStatus: response.status,
-        testDevice: devcode,
-        apiParams: params,
-        shinePhoneResponse: data
-      },
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    console.error('💥 ERRORE:', error);
-    return res.status(500).json({
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    });
+    if (!username) return res.status(400).json({ error: 'Username mancante' });
   }
+
+  // 🔧 Imposta devcode se manca (solo test)
+  const testDevice = 'GPG0CLU18P';
+  if (!body.devcode && action !== 'login') {
+    body.devcode = testDevice;
+  }
+
+  // 🕒 Aggiungi timestamp se non presente
+  if (!body.timestamp) {
+    body.timestamp = Date.now();
+  }
+
+  // 🔁 Invia la richiesta a ShinePhone
+  const shineRes = await fetch('https://api.shinemonitor.com/public', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams(body).toString(),
+  });
+
+  const shineData = await shineRes.json();
+
+  return res.status(200).json({
+    success: true,
+    debug: {
+      httpStatus: shineRes.status,
+      apiParams: body,
+      shinePhoneResponse: shineData,
+    },
+    timestamp: new Date().toISOString(),
+  });
 }
+
