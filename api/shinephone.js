@@ -3,48 +3,80 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
 
-  const isForm = req.headers['content-type'] === 'application/x-www-form-urlencoded';
-  const body = isForm ? Object.fromEntries(new URLSearchParams(req.body)) : req.body;
+  const {
+    action,
+    usr,
+    token,
+    devcode,
+    serialNum,
+    client,
+    language,
+    region,
+    v,
+    isWeb,
+    userName,
+    userPassword,
+  } = req.body || {};
 
-  const action = body.action;
+  let url = '';
+  let method = 'POST';
+  let headers = {};
+  let body = '';
 
-  // ✅ Solo per le chiamate diverse da 'login', richiedi token e username
-  if (action !== 'login') {
-    const token = body.token;
-    const username = body.usr || body.username || body.userName;
+  try {
+    if (action === 'login') {
+      url = 'https://eu.shinemonitor.com/user/login';
+      headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      body = new URLSearchParams({
+        userName,
+        userPassword,
+        language: language || 'en',
+        isWeb: isWeb || 'true',
+        client: client || 'ios',
+      }).toString();
+    } else if (action === 'queryDeviceRealTimeKpis') {
+      url = 'https://eu.shinemonitor.com/device/queryDeviceRealTimeKpis';
+      headers = {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      };
+      body = new URLSearchParams({
+        action,
+        usr,
+        token,
+        devcode,
+        serialNum,
+        client: client || 'ios',
+        language: language || 'en',
+        region: region || 'eu',
+        v: v || '4.0.2',
+        isWeb: isWeb || 'true',
+        timestamp: Math.floor(Date.now() / 1000),
+      }).toString();
+    } else {
+      return res.status(400).json({ error: 'Unsupported action' });
+    }
 
-    if (!token) return res.status(400).json({ error: 'Token mancante' });
-    if (!username) return res.status(400).json({ error: 'Username mancante' });
+    const shinePhoneResponse = await fetch(url, {
+      method,
+      headers,
+      body,
+    });
+
+    const json = await shinePhoneResponse.json();
+
+    return res.status(200).json({
+      success: true,
+      debug: {
+        httpStatus: shinePhoneResponse.status,
+        testDevice: devcode,
+        apiParams: Object.fromEntries(new URLSearchParams(body)),
+        shinePhoneResponse: json,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (error) {
+    return res.status(500).json({ error: 'Internal Server Error', details: error.message });
   }
-
-  // 🔧 Imposta devcode se manca (solo test)
-  const testDevice = 'GPG0CLU18P';
-  if (!body.devcode && action !== 'login') {
-    body.devcode = testDevice;
-  }
-
-  // 🕒 Aggiungi timestamp se non presente
-  if (!body.timestamp) {
-    body.timestamp = Date.now();
-  }
-
-  // 🔁 Invia la richiesta a ShinePhone
-  const shineRes = await fetch('https://api.shinemonitor.com/public', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams(body).toString(),
-  });
-
-  const shineData = await shineRes.json();
-
-  return res.status(200).json({
-    success: true,
-    debug: {
-      httpStatus: shineRes.status,
-      apiParams: body,
-      shinePhoneResponse: shineData,
-    },
-    timestamp: new Date().toISOString(),
-  });
 }
-
