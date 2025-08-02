@@ -28,12 +28,15 @@ const params = {
   usr: username,
   token: token,
   devcode: testDevice,
+  serialNum: testDevice,        // ✅ AGGIUNTO
   client: 'ios',
   language: 'en',
-  region: 'eu',         // AGGIUNTO
-  v: '4.0.2',           // AGGIUNTO
+  region: 'eu',
+  v: '4.0.2',
+  isWeb: 'true',                // ✅ AGGIUNTO
   timestamp: Date.now()
 };
+
 
     console.log('📡 API Params:', JSON.stringify(params, null, 2));
 
