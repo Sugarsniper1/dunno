@@ -1,3 +1,7 @@
+// api/shinephone.js
+
+import querystring from 'querystring';
+
 export default async function handler(req, res) {
   // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -7,59 +11,76 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const { action, token, username } = req.body;
+    // Supporto JSON e x-www-form-urlencoded
+    const body = req.headers['content-type'] === 'application/x-www-form-urlencoded'
+      ? querystring.parse(await new Promise((resolve, reject) => {
+          let raw = '';
+          req.on('data', chunk => raw += chunk);
+          req.on('end', () => resolve(raw));
+          req.on('error', reject);
+        }))
+      : req.body;
 
-    // Log base
-    console.log('🔍 REQUEST BODY:', JSON.stringify(req.body, null, 2));
-    console.log('🔑 Token:', token ? token.substring(0, 8) + '...' : 'MISSING');
-    console.log('👤 Username:', username || 'MISSING');
+    const {
+      action = 'queryDeviceRealTimeKpis',
+      token,
+      username,
+      usr,
+      devcode = 'GPG0CLU18P',
+      serialNum = 'GPG0CLU18P',
+      client = 'ios',
+      language = 'en',
+      region = 'eu',
+      v = '4.0.2',
+      isWeb = 'true',
+      timestamp = Math.floor(Date.now() / 1000)
+    } = body;
 
-    // Validazioni
+    const finalUsername = username || usr;
+
+    // Log di debug
+    console.log('🔍 BODY:', JSON.stringify(body, null, 2));
+    console.log('🔑 Token:', token?.substring(0, 8) + '...');
+    console.log('👤 Username:', finalUsername);
+    console.log('📟 Device:', devcode);
+
     if (!token) return res.status(400).json({ error: 'Token mancante' });
-    if (!username) return res.status(400).json({ error: 'Username mancante' });
+    if (!finalUsername) return res.status(400).json({ error: 'Username mancante' });
 
+    // Import dinamico di fetch (compatibile con Vercel)
     const fetch = (await import('node-fetch')).default;
 
-    const testDevice = 'GPG0CLU18P';
-    const timestamp = Math.floor(Date.now() / 1000);
+    const params = {
+      action,
+      usr: finalUsername,
+      token,
+      devcode,
+      serialNum,
+      client,
+      language,
+      region,
+      v,
+      isWeb,
+      timestamp
+    };
 
-const params = {
-  action: 'queryDeviceRealTimeKpis',
-  usr: username,
-  token: token,
-  devcode: testDevice,
-  serialNum: testDevice,        // ✅ AGGIUNTO
-  client: 'ios',
-  language: 'en',
-  region: 'eu',
-  v: '4.0.2',
-  isWeb: 'true',                // ✅ AGGIUNTO
-  timestamp: Date.now()
-};
-
-
-    console.log('📡 API Params:', JSON.stringify(params, null, 2));
-
+    // Chiamata a ShinePhone
     const response = await fetch('https://api.shinemonitor.com/public/', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'AxinteleDebug/1.0'
+        'User-Agent': 'Axintele/1.0'
       },
       body: new URLSearchParams(params)
     });
 
-    console.log('📡 HTTP Status:', response.status);
-    console.log('📡 HTTP Headers:', JSON.stringify([...response.headers.entries()]));
-
     const data = await response.json();
-    console.log('📦 ShinePhone Response:', JSON.stringify(data, null, 2));
 
     return res.status(200).json({
       success: true,
       debug: {
         httpStatus: response.status,
-        testDevice,
+        testDevice: devcode,
         apiParams: params,
         shinePhoneResponse: data
       },
@@ -67,7 +88,7 @@ const params = {
     });
 
   } catch (error) {
-    console.error('💥 ERROR:', error);
+    console.error('💥 ERRORE:', error);
     return res.status(500).json({
       error: error.message,
       stack: error.stack,
