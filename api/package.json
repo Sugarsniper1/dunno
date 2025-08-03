@@ -1,11 +1,12 @@
 {
-  "name": "dunno-solar-proxy",
+  "name": "axintele-shine-api",
   "version": "1.0.0",
   "description": "Proxy API per ShinePhone - Parco Solare Axintele",
+  "type": "module",
   "dependencies": {
-    "node-fetch": "^2.6.7"
+    "node-fetch": "^3.3.2"
   },
   "engines": {
-    "node": ">=14.0.0"
+    "node": ">=18.0.0"
   }
 }
