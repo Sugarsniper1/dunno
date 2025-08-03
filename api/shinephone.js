@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   try {
     const params = {
       action: 'login',
-      userName: 'dsf',
+      userName: 'Dsf',
       userPassword: '123456',
       language: 'en',
       isWeb: 'true',
