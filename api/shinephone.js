@@ -1,7 +1,7 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   try {
-    const fetch = (await import('node-fetch')).default;
-
     const params = {
       action: 'login',
       userName: 'dsf',
@@ -55,40 +55,3 @@ export default async function handler(req, res) {
   }
 }
 
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 16_1 like Mac OS X)'
-      },
-      body: new URLSearchParams(params)
-    });
-
-    const text = await response.text();
-
-    // Prova a convertire in JSON, se possibile
-    let data;
-    try {
-      data = JSON.parse(text);
-    } catch (err) {
-      return res.status(500).json({
-        error: 'Risposta non valida da ShinePhone (non è un JSON)',
-        raw: text
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      debug: {
-        httpStatus: response.status,
-        apiParams: params,
-        shinePhoneResponse: data
-      },
-      timestamp: new Date().toISOString()
-    });
-
-  } catch (error) {
-    return res.status(500).json({
-      error: error.message,
-      stack: error.stack,
-      timestamp: new Date().toISOString()
-    });
-  }
-}
