@@ -9,7 +9,7 @@ export default async function handler(req, res) {
       language: 'en',
       isWeb: 'true',
       client: 'ios',
-      region: 'Romania',
+      region: 'romania',
       v: '4.0.2',
       devcode: 'GPG0CLU18P',
       serialNum: 'GPG0CLU18P'
