@@ -18,6 +18,10 @@ export default async function handler(req, res) {
       }
     });
 
+    if (!response.ok) {
+      throw new Error(`External API error: ${response.status}`);
+    }
+
     const data = await response.json();
 
     res.status(200).json({ success: true, data });

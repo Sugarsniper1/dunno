@@ -6,6 +6,9 @@
   "dependencies": {
     "node-fetch": "^3.3.2"
   },
+  "scripts": {
+    "test": "node --test"
+  },
   "engines": {
     "node": ">=18.0.0"
   }
