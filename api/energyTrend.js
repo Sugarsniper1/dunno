@@ -18,6 +18,14 @@ export default async function handler(req, res) {
       }
     });
 
+    if (!response.ok) {
+      return res.status(response.status).json({
+        error: 'Failed to fetch energy trend',
+        status: response.status,
+        statusText: response.statusText
+      });
+    }
+
     const data = await response.json();
 
     res.status(200).json({ success: true, data });
