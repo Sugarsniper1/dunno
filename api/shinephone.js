@@ -4,15 +4,15 @@ export default async function handler(req, res) {
   try {
     const params = {
       action: 'login',
-      userName: 'Dsf',
-      userPassword: '123456',
+      userName: process.env.SHINE_USERNAME,
+      userPassword: process.env.SHINE_PASSWORD,
       language: 'en',
       isWeb: 'true',
       client: 'ios',
-      region: 'romania',
+      region: process.env.SHINE_REGION || 'romania',
       v: '4.0.2',
-      devcode: 'GPG0CLU18P',
-      serialNum: 'GPG0CLU18P'
+      devcode: process.env.SHINE_DEVCODE,
+      serialNum: process.env.SHINE_SERIAL
     };
 
     const response = await fetch('https://server.growatt.com/login', {
