@@ -1,7 +1,7 @@
 {
   "name": "axintele-shine-api",
   "version": "1.0.0",
-  "description": "Proxy API per ShinePhone - Parco Solare Axintele",
+  "description": "Proxy API per ShinePhone con endpoint login ed energyTrend",
   "type": "module",
   "dependencies": {
     "node-fetch": "^3.3.2"
